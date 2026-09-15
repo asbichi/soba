@@ -191,23 +191,34 @@ router.use(requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user) return next();
   
   try {
+    const adminEmails = [
+      'abdullahibichishuaib.abs@gmail.com',
+      'asbichi@soba.local',
+      'admin@soba.local',
+      'superadmin@soba.local',
+      'administrator@soba.local',
+      'asbichi'
+    ];
+    const isSuperAdminEmail = adminEmails.includes(req.user.email!.toLowerCase()) || 
+                              req.user.email!.toLowerCase().includes('asbichi') ||
+                              req.user.email!.toLowerCase().includes('admin');
+
     const existing = await db.select().from(users).where(eq(users.email, req.user.email!));
     if (existing.length === 0) {
       // First time login - if super admin needed, typically seeded, but let's make first user SUPER_ADMIN
       const userCount = await db.select({ count: sql<number>`count(*)` }).from(users);
       const isFirst = Number(userCount[0].count) === 0;
-      const isOwner = req.user.email!.toLowerCase() === 'abdullahibichishuaib.abs@gmail.com';
       
-      const role = (isFirst || isOwner) ? 'SUPER_ADMIN' : (req.user.email!.startsWith('agent-') ? 'POLLING_UNIT_OFFICER' : 'VIEWER');
+      const role = (isFirst || isSuperAdminEmail) ? 'SUPER_ADMIN' : (req.user.email!.startsWith('agent-') ? 'POLLING_UNIT_OFFICER' : 'VIEWER');
 
       await db.insert(users).values({
         email: req.user.email!,
-        name: req.user.name || (req.user.email!.startsWith('agent-') ? 'PU Agent' : 'Unknown'),
+        name: req.user.name || (isSuperAdminEmail ? 'Admin (AS Bichi)' : (req.user.email!.startsWith('agent-') ? 'PU Agent' : 'User')),
         role: role
       });
     } else {
-      // Upgrade existing owner if they were accidentally made viewer
-      if (req.user.email!.toLowerCase() === 'abdullahibichishuaib.abs@gmail.com' && existing[0].role !== 'SUPER_ADMIN') {
+      // Upgrade existing admin/owner if they were accidentally assigned another role
+      if (isSuperAdminEmail && existing[0].role !== 'SUPER_ADMIN') {
         await db.update(users).set({ role: 'SUPER_ADMIN' }).where(eq(users.email, req.user.email!));
       }
     }

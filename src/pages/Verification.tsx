@@ -46,7 +46,7 @@ export function Verification() {
       
       if (res.ok) {
         // Remove from list
-        setResults(results.filter(r => r.id !== id));
+        setResults((prev) => (Array.isArray(prev) ? prev.filter(r => r.id !== id) : []));
       } else {
         alert('Failed to update status');
       }

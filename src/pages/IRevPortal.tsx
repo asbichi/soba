@@ -143,7 +143,7 @@ export function IRevPortal() {
                   <div className="flex flex-col md:flex-row gap-8">
                     <div className="md:w-1/2 space-y-4">
                        <h4 className="font-bold text-[#5cb85c] border-b border-slate-100 pb-2 text-sm uppercase tracking-wider">Tabulated Votes</h4>
-                       {stats?.candidateTotals ? (
+                       {Array.isArray(stats?.candidateTotals) && stats.candidateTotals.length > 0 ? (
                           <div className="space-y-3">
                             {stats.candidateTotals.slice(0, 5).map((ct: any, idx: number) => (
                               <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded border border-slate-200">

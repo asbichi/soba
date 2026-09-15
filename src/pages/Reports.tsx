@@ -38,12 +38,13 @@ export function Reports() {
   if (loading) return <div className="p-8 text-slate-500">Loading reports...</div>;
 
   const totalValidVotes = stats?.aggregatedVotes?.totalValidVotes || 0;
+  const candidateTotals = Array.isArray(stats?.candidateTotals) ? stats.candidateTotals : [];
 
   // Filter candidate totals based on search
-  const filteredCandidates = stats?.candidateTotals?.filter((ct: any) => {
+  const filteredCandidates = candidateTotals.filter((ct: any) => {
     const q = searchQuery.toLowerCase();
-    return ct.partyAbbr.toLowerCase().includes(q) || ct.candidateName.toLowerCase().includes(q);
-  }).sort((a: any, b: any) => b.totalVotes - a.totalVotes) || [];
+    return (ct?.partyAbbr || '').toLowerCase().includes(q) || (ct?.candidateName || '').toLowerCase().includes(q);
+  }).sort((a: any, b: any) => Number(b.totalVotes || 0) - Number(a.totalVotes || 0));
 
   const handleExportCsv = () => {
     if (!filteredCandidates || filteredCandidates.length === 0) return;

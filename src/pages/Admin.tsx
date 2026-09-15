@@ -367,10 +367,14 @@ export function Admin() {
   };
 
   // Filtered Polling Units for Verification Table
-  const filteredPollingUnits = pollingUnits.filter((pu) => {
+  const safePollingUnits = Array.isArray(pollingUnits) ? pollingUnits : [];
+  const safePreviewRows = Array.isArray(previewRows) ? previewRows : [];
+
+  const filteredPollingUnits = safePollingUnits.filter((pu) => {
+    if (!pu) return false;
     const matchesWard =
       selectedWardFilter === 'ALL' ||
-      pu.wardId.toString() === selectedWardFilter;
+      (pu.wardId != null && pu.wardId.toString() === selectedWardFilter);
 
     const query = puSearchQuery.trim().toLowerCase();
     const matchesSearch =
@@ -380,11 +384,11 @@ export function Admin() {
       (pu.location && pu.location.toLowerCase().includes(query)) ||
       (pu.wardName && pu.wardName.toLowerCase().includes(query));
 
-    return matchesWard && matchesSearch;
+    return Boolean(matchesWard && matchesSearch);
   });
 
-  const validPreviewCount = previewRows.filter((r) => r.isValid).length;
-  const invalidPreviewCount = previewRows.filter((r) => !r.isValid).length;
+  const validPreviewCount = safePreviewRows.filter((r) => r && r.isValid).length;
+  const invalidPreviewCount = safePreviewRows.filter((r) => r && !r.isValid).length;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-16 font-sans">

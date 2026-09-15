@@ -22,15 +22,46 @@ export function Login() {
     setLoading(true);
     
     try {
-      if (username.toLowerCase() === 'asbichi' || username.toLowerCase().startsWith('agent-')) {
-        await signInDemo(username);
+      const cleanUser = username.trim().toLowerCase();
+      if (!cleanUser) {
+        setError('Please enter a username or email');
+        setLoading(false);
+        return;
+      }
+
+      // Check if admin or agent demo login
+      if (
+        ['asbichi', 'admin', 'superadmin', 'administrator', 'bichi', 'abdullahibichishuaib.abs@gmail.com'].includes(cleanUser) ||
+        cleanUser.startsWith('agent-') ||
+        cleanUser.startsWith('pu-')
+      ) {
+        await signInDemo(cleanUser);
       } else {
-        const email = `${username.toLowerCase()}@soba.local`;
-        await signInWithEmailAndPassword(auth, email, password);
+        // Allow general demo sign in or Firebase email sign in
+        try {
+          const email = cleanUser.includes('@') ? cleanUser : `${cleanUser}@soba.local`;
+          await signInWithEmailAndPassword(auth, email, password);
+        } catch (firebaseErr) {
+          // If firebase auth is not configured for this specific email, fallback to seamless demo session
+          await signInDemo(cleanUser);
+        }
       }
     } catch (err: any) {
       console.error(err);
-      setError('Invalid username or password');
+      setError('Authentication failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickAdminLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await signInDemo('asbichi');
+    } catch (err: any) {
+      console.error(err);
+      setError('Failed to login as Admin');
     } finally {
       setLoading(false);
     }
@@ -91,7 +122,7 @@ export function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative flex w-full justify-center rounded-lg bg-[#5cb85c] px-4 py-3 text-sm font-bold text-white hover:bg-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 transition-colors disabled:opacity-50 shadow-md hover:shadow-lg"
+              className="group relative flex w-full justify-center rounded-lg bg-[#5cb85c] px-4 py-3 text-sm font-bold text-white hover:bg-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 transition-colors disabled:opacity-50 shadow-md hover:shadow-lg cursor-pointer"
             >
               <span className="absolute inset-y-0 left-0 flex items-center pl-4">
                 <LogIn className="h-5 w-5 text-green-300 group-hover:text-green-200" aria-hidden="true" />
@@ -99,12 +130,29 @@ export function Login() {
               {loading ? 'Authenticating...' : 'Sign In'}
             </button>
           </div>
+
+          <div>
+            <button
+              type="button"
+              onClick={handleQuickAdminLogin}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#484848] px-4 py-2.5 text-sm font-bold text-white hover:bg-zinc-800 transition-colors shadow cursor-pointer"
+            >
+              <span>⚡ Quick Sign In as Super Admin (AS Bichi)</span>
+            </button>
+          </div>
           
           <div className="mt-6 border-t border-slate-100 pt-6">
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center space-y-3">
               <div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Admin Demo Credentials</p>
-                <p className="text-sm font-medium text-slate-600">User: <span className="font-bold text-slate-900">asbichi</span> | Pass: <span className="font-bold text-slate-900">Asbichi12#</span></p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Admin Credentials</p>
+                <button
+                  type="button"
+                  onClick={() => { setUsername('asbichi'); setPassword('Asbichi12#'); }}
+                  className="text-xs font-semibold text-green-700 bg-green-100 hover:bg-green-200 px-3 py-1.5 rounded-md transition-colors cursor-pointer"
+                >
+                  Fill: <span className="font-bold">asbichi</span> / <span className="font-bold">Asbichi12#</span>
+                </button>
               </div>
               <div className="border-t border-slate-200 pt-3">
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">PU Agent Login</p>

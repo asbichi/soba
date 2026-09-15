@@ -38,18 +38,22 @@ export function Dashboard() {
 
   if (loading) return <div className="p-8">Loading dashboard...</div>;
 
-  const resultsReceived = stats?.resultsStats.filter(s => s.status !== 'PENDING').reduce((acc, curr) => acc + Number(curr.count), 0) || 0;
-  const resultsVerified = stats?.resultsStats.find(s => s.status === 'VERIFIED')?.count || 0;
-  const resultsPending = stats?.resultsStats.find(s => s.status === 'PENDING')?.count || 0;
-  const resultsRejected = stats?.resultsStats.find(s => s.status === 'REJECTED')?.count || 0;
+  const resultsStats = Array.isArray(stats?.resultsStats) ? stats.resultsStats : [];
+  const candidateTotals = Array.isArray(stats?.candidateTotals) ? stats.candidateTotals : [];
+  const wardTotals = Array.isArray(stats?.wardTotals) ? stats.wardTotals : [];
+
+  const resultsReceived = resultsStats.filter(s => s.status !== 'PENDING').reduce((acc, curr) => acc + Number(curr.count || 0), 0) || 0;
+  const resultsVerified = resultsStats.find(s => s.status === 'VERIFIED')?.count || 0;
+  const resultsPending = resultsStats.find(s => s.status === 'PENDING')?.count || 0;
+  const resultsRejected = resultsStats.find(s => s.status === 'REJECTED')?.count || 0;
   
   const percentageReceived = stats?.totalPUs ? Math.round((resultsReceived / stats.totalPUs) * 100) : 0;
   const totalValidVotes = stats?.aggregatedVotes?.totalValidVotes || 0;
 
   // Prepare chart data
   const chartDataMap: Record<string, any> = {};
-  if (stats?.wardTotals) {
-    stats.wardTotals.forEach(row => {
+  if (wardTotals.length > 0) {
+    wardTotals.forEach(row => {
       if (!chartDataMap[row.wardName]) {
         chartDataMap[row.wardName] = { name: row.wardName };
       }
@@ -127,8 +131,8 @@ export function Dashboard() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
-              {stats?.candidateTotals && stats.candidateTotals.length > 0 ? (
-                stats.candidateTotals.sort((a, b) => b.totalVotes - a.totalVotes).map((ct, idx) => (
+              {candidateTotals.length > 0 ? (
+                [...candidateTotals].sort((a, b) => b.totalVotes - a.totalVotes).map((ct, idx) => (
                   <tr key={idx} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">{ct.partyAbbr}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{ct.candidateName}</td>

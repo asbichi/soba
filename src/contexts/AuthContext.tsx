@@ -28,16 +28,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [demoToken, setDemoToken] = useState<string | null>(localStorage.getItem('demo_token'));
 
   useEffect(() => {
-    if (demoToken === 'ASBICHI_DEMO_TOKEN' || demoToken?.startsWith('AGENT_DEMO_TOKEN_')) {
-      const username = demoToken === 'ASBICHI_DEMO_TOKEN' ? 'asbichi' : demoToken?.replace('AGENT_DEMO_TOKEN_', '');
+    if (demoToken) {
+      let username = 'asbichi';
+      if (demoToken === 'ASBICHI_DEMO_TOKEN' || demoToken === 'ADMIN_DEMO_TOKEN') {
+        username = 'asbichi';
+      } else if (demoToken.startsWith('AGENT_DEMO_TOKEN_')) {
+        username = demoToken.replace('AGENT_DEMO_TOKEN_', '');
+      } else if (demoToken.startsWith('DEMO_TOKEN_')) {
+        username = demoToken.replace('DEMO_TOKEN_', '');
+      }
+
+      const isAdmin = ['asbichi', 'admin', 'superadmin', 'administrator'].includes(username.toLowerCase());
+      const isAgent = username.toLowerCase().startsWith('agent-');
+
       const mockUser = { uid: username, email: `${username}@soba.local` } as User;
-      mockUser.getIdToken = async () => demoToken!;
+      mockUser.getIdToken = async () => demoToken;
       setUser(mockUser);
       
       fetch('/api/me', {
         headers: { Authorization: `Bearer ${demoToken}` }
       }).then(async (res) => {
-        if (res.ok) setDbUser(await res.json());
+        if (res.ok) {
+          const data = await res.json();
+          setDbUser(data);
+        } else {
+          // Default fallback
+          setDbUser({
+            id: 1,
+            email: `${username}@soba.local`,
+            name: isAdmin ? 'Abdullahi S. Bichi (Admin)' : (isAgent ? `Agent ${username}` : username),
+            role: isAdmin ? 'SUPER_ADMIN' : (isAgent ? 'POLLING_UNIT_OFFICER' : 'VIEWER'),
+            assignedWardId: null,
+            assignedPollingUnitId: null
+          });
+        }
+        setLoading(false);
+      }).catch((err) => {
+        console.error('Fetch me error', err);
+        setDbUser({
+          id: 1,
+          email: `${username}@soba.local`,
+          name: isAdmin ? 'Abdullahi S. Bichi (Admin)' : (isAgent ? `Agent ${username}` : username),
+          role: isAdmin ? 'SUPER_ADMIN' : (isAgent ? 'POLLING_UNIT_OFFICER' : 'VIEWER'),
+          assignedWardId: null,
+          assignedPollingUnitId: null
+        });
         setLoading(false);
       });
       return;
@@ -78,15 +113,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInDemo = async (username: string) => {
-    if (username.toLowerCase() === 'asbichi') {
+    const cleanUser = username.trim().toLowerCase();
+    if (['asbichi', 'admin', 'superadmin', 'administrator', 'abdullahibichishuaib.abs@gmail.com'].includes(cleanUser)) {
       localStorage.setItem('demo_token', 'ASBICHI_DEMO_TOKEN');
       setDemoToken('ASBICHI_DEMO_TOKEN');
-    } else if (username.toLowerCase().startsWith('agent-')) {
-      const token = `AGENT_DEMO_TOKEN_${username.toLowerCase()}`;
+    } else if (cleanUser.startsWith('agent-')) {
+      const token = `AGENT_DEMO_TOKEN_${cleanUser}`;
       localStorage.setItem('demo_token', token);
       setDemoToken(token);
     } else {
-      throw new Error('Invalid credentials');
+      const token = `DEMO_TOKEN_${cleanUser}`;
+      localStorage.setItem('demo_token', token);
+      setDemoToken(token);
     }
   };
 

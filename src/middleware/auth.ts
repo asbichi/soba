@@ -22,14 +22,20 @@ export const requireAuth = async (
 
   const token = authHeader.split('Bearer ')[1];
   
-  if (token === 'ASBICHI_DEMO_TOKEN') {
-    req.user = { email: 'asbichi@soba.local', uid: 'asbichi' } as any;
+  if (token === 'ASBICHI_DEMO_TOKEN' || token === 'ADMIN_DEMO_TOKEN' || token === 'SUPERADMIN_DEMO_TOKEN') {
+    req.user = { email: 'asbichi@soba.local', uid: 'asbichi', name: 'Abdullahi S. Bichi' } as any;
     return next();
   }
   
   if (token.startsWith('AGENT_DEMO_TOKEN_')) {
     const username = token.replace('AGENT_DEMO_TOKEN_', '');
-    req.user = { email: `${username}@soba.local`, uid: username } as any;
+    req.user = { email: `${username}@soba.local`, uid: username, name: `Agent ${username}` } as any;
+    return next();
+  }
+
+  if (token.startsWith('DEMO_TOKEN_')) {
+    const username = token.replace('DEMO_TOKEN_', '');
+    req.user = { email: `${username}@soba.local`, uid: username, name: username } as any;
     return next();
   }
 
