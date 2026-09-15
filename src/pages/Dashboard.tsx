@@ -62,21 +62,21 @@ export function Dashboard() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between pb-4 border-b border-slate-200">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Live Collation Dashboard</h1>
+          <h1 className="text-3xl font-extrabold text-[#484848] tracking-tight">Live Collation Dashboard</h1>
           <p className="mt-2 text-sm text-slate-500">Real-time vote aggregation and verification monitor.</p>
         </div>
-        <span className="px-4 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-100 rounded-full border border-emerald-200 shadow-sm">
+        <span className="px-4 py-1.5 text-xs font-bold text-green-800 bg-green-100 rounded-full border border-green-200 shadow-sm">
           LIVE COLLATION ACTIVE
         </span>
       </div>
       
       <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-semibold text-slate-700 tracking-wide">Results Received: {resultsReceived} / {stats?.totalPUs || 0} Polling Units</span>
-          <span className="text-lg font-bold text-emerald-600">{percentageReceived}%</span>
+          <span className="text-sm font-semibold text-[#484848] tracking-wide">Results Received: {resultsReceived} / {stats?.totalPUs || 0} Polling Units</span>
+          <span className="text-lg font-bold text-[#5cb85c]">{percentageReceived}%</span>
         </div>
         <div className="w-full bg-slate-100 rounded-full h-3">
-          <div className="bg-emerald-500 h-3 rounded-full transition-all duration-1000 ease-out" style={{ width: `${percentageReceived}%` }}></div>
+          <div className="bg-[#5cb85c] h-3 rounded-full transition-all duration-1000 ease-out" style={{ width: `${percentageReceived}%` }}></div>
         </div>
       </div>
       
@@ -88,7 +88,7 @@ export function Dashboard() {
         <StatCard title="Results Pending" value={resultsPending} />
         <StatCard title="Results Rejected" value={resultsRejected} />
         <StatCard title="Total Votes Cast" value={stats?.aggregatedVotes?.totalVotesCast || 0} />
-        <StatCard title="Total Valid Votes" value={totalValidVotes} colorClass="bg-emerald-50 border-emerald-100" />
+        <StatCard title="Total Valid Votes" value={totalValidVotes} colorClass="bg-green-50 border-green-100 text-[#484848]" />
       </div>
 
       {chartData.length > 0 && (
@@ -156,9 +156,9 @@ export function Dashboard() {
 function StatCard({ title, value, subtext, colorClass = "bg-white border-slate-200" }: { title: string, value: string | number, subtext?: string, colorClass?: string }) {
   return (
     <div className={clsx("p-6 rounded-2xl border shadow-sm transition-shadow hover:shadow-md flex flex-col justify-between", colorClass)}>
-      <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{title}</span>
+      <span className={clsx("text-sm font-semibold uppercase tracking-wider", colorClass.includes('text-[#484848]') ? "" : "text-slate-500")}>{title}</span>
       <div className="mt-4 flex items-baseline gap-2">
-        <span className="text-3xl font-bold text-slate-900">{value.toLocaleString()}</span>
+        <span className={clsx("text-3xl font-bold", colorClass.includes('text-[#484848]') ? "" : "text-[#484848]")}>{value.toLocaleString()}</span>
         {subtext && <span className="text-sm font-medium text-slate-400">{subtext}</span>}
       </div>
     </div>

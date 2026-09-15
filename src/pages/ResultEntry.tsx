@@ -156,7 +156,7 @@ export function ResultEntry() {
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8 pb-12">
       <div>
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Result Entry</h1>
+        <h1 className="text-3xl font-extrabold text-[#484848] tracking-tight">Result Entry</h1>
         <p className="mt-2 text-sm text-slate-500">Enter and submit the votes exactly as recorded on the official polling unit sheet.</p>
       </div>
 
@@ -167,12 +167,12 @@ export function ResultEntry() {
       )}
 
       <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-        <h2 className="text-lg font-bold text-slate-800 tracking-tight border-b border-slate-100 pb-2">Location Details</h2>
+        <h2 className="text-lg font-bold text-[#484848] tracking-tight border-b border-slate-100 pb-2">Location Details</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-semibold text-slate-700">Election</label>
             <select 
-              className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-3 focus:ring-emerald-500 focus:border-emerald-500 text-base sm:text-sm transition-shadow bg-white"
+              className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-3 focus:ring-[#5cb85c] focus:border-[#5cb85c] text-base sm:text-sm transition-shadow bg-white outline-none"
               value={selectedElection}
               onChange={(e) => setSelectedElection(e.target.value)}
               required
@@ -184,7 +184,7 @@ export function ResultEntry() {
           <div>
             <label className="block text-sm font-semibold text-slate-700">Ward</label>
             <select 
-              className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-3 focus:ring-emerald-500 focus:border-emerald-500 text-base sm:text-sm transition-shadow bg-white"
+              className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-3 focus:ring-[#5cb85c] focus:border-[#5cb85c] text-base sm:text-sm transition-shadow bg-white outline-none"
               value={selectedWard}
               onChange={(e) => setSelectedWard(e.target.value)}
               required
@@ -196,7 +196,7 @@ export function ResultEntry() {
           <div className="col-span-1 md:col-span-2">
             <label className="block text-sm font-semibold text-slate-700">Polling Unit</label>
             <select 
-              className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-3 focus:ring-emerald-500 focus:border-emerald-500 text-base sm:text-sm transition-shadow disabled:bg-slate-50 disabled:text-slate-400 bg-white"
+              className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-3 focus:ring-[#5cb85c] focus:border-[#5cb85c] text-base sm:text-sm transition-shadow disabled:bg-slate-50 disabled:text-slate-400 bg-white outline-none"
               value={selectedPU}
               onChange={(e) => setSelectedPU(e.target.value)}
               required
@@ -252,7 +252,7 @@ export function ResultEntry() {
                   <td className="px-4 py-2 whitespace-nowrap text-right">
                     <input 
                       type="number" 
-                      className="block w-full text-right font-bold rounded-lg border-slate-300 shadow-sm border p-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-shadow" 
+                      className="block w-full text-right font-bold rounded-lg border-slate-300 shadow-sm border p-2 focus:ring-[#5cb85c] focus:border-[#5cb85c] sm:text-sm transition-shadow outline-none" 
                       placeholder="0"
                       value={candidateVotes[c.id] || ''}
                       onChange={(e) => setCandidateVotes({...candidateVotes, [c.id]: e.target.value})}
@@ -266,26 +266,26 @@ export function ResultEntry() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 pt-8 border-t border-slate-100">
              <div>
                <label className="block text-sm font-semibold text-slate-700">Total Valid Votes (Auto)</label>
-               <input type="number" readOnly className="mt-2 block w-full rounded-lg border-slate-200 bg-slate-50 shadow-inner border p-2.5 text-slate-600 sm:text-sm font-bold cursor-not-allowed" value={totalValidVotes} />
+               <input type="number" readOnly className="mt-2 block w-full rounded-lg border-slate-200 bg-slate-50 shadow-inner border p-2.5 text-slate-600 sm:text-sm font-bold cursor-not-allowed outline-none" value={totalValidVotes} />
              </div>
              <div>
                <label className="block text-sm font-semibold text-slate-700">Rejected / Invalid Votes</label>
-               <input type="number" required value={rejectedVotes} onChange={e => setRejectedVotes(e.target.value)} className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-2.5 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-shadow font-medium" placeholder="0" />
+               <input type="number" required value={rejectedVotes} onChange={e => setRejectedVotes(e.target.value)} className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-2.5 focus:ring-[#5cb85c] focus:border-[#5cb85c] sm:text-sm transition-shadow font-medium outline-none" placeholder="0" />
              </div>
              <div>
                <label className="block text-sm font-semibold text-slate-700">Total Votes Cast</label>
-               <input type="number" required value={totalVotesCast} onChange={e => setTotalVotesCast(e.target.value)} className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-2.5 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-shadow font-medium" placeholder="0" />
+               <input type="number" required value={totalVotesCast} onChange={e => setTotalVotesCast(e.target.value)} className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-2.5 focus:ring-[#5cb85c] focus:border-[#5cb85c] sm:text-sm transition-shadow font-medium outline-none" placeholder="0" />
              </div>
           </div>
         </div>
       </div>
 
       <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
-         <h2 className="text-lg font-bold text-slate-800 tracking-tight border-b border-slate-100 pb-2 mb-4">Evidence Upload</h2>
+         <h2 className="text-lg font-bold text-[#484848] tracking-tight border-b border-slate-100 pb-2 mb-4">Evidence Upload</h2>
          <div className="mt-2 flex justify-center rounded-xl border-2 border-dashed border-slate-300 px-6 py-10 bg-slate-50 hover:bg-slate-100 transition-colors">
             <div className="text-center">
               <div className="mt-4 flex text-sm leading-6 text-slate-600 justify-center">
-                <label className="relative cursor-pointer rounded-md font-bold text-emerald-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-emerald-600 focus-within:ring-offset-2 hover:text-emerald-500">
+                <label className="relative cursor-pointer rounded-md font-bold text-[#5cb85c] hover:text-green-600">
                   <span>Upload official EC8A form (Optional)</span>
                   <input id="file-upload" name="file-upload" type="file" className="sr-only" />
                 </label>
@@ -296,8 +296,8 @@ export function ResultEntry() {
       </div>
 
       <div className="flex justify-end gap-4 pt-4">
-        <button type="button" onClick={() => navigate('/')} className="px-6 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50 transition-colors">Cancel</button>
-        <button type="submit" disabled={submitting} className="px-6 py-2.5 text-sm font-bold text-white bg-emerald-600 border border-transparent rounded-lg shadow-sm hover:bg-emerald-700 transition-colors disabled:opacity-50">
+        <button type="button" onClick={() => navigate('/dashboard')} className="px-6 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50 transition-colors">Cancel</button>
+        <button type="submit" disabled={submitting} className="px-6 py-2.5 text-sm font-bold text-white bg-[#5cb85c] border border-transparent rounded-lg shadow-sm hover:bg-green-600 transition-colors disabled:opacity-50">
           {submitting ? 'Submitting...' : 'Submit Official Result'}
         </button>
       </div>

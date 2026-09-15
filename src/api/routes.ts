@@ -109,6 +109,83 @@ router.post('/seed-demo', async (req, res) => {
   }
 });
 
+// --- PUBLIC ENDPOINTS ---
+
+router.get('/wards', async (req, res) => {
+  try {
+    const data = await db.select().from(wards);
+    res.json(data);
+  } catch (err) { res.status(500).json({ error: 'Failed to fetch wards' }); }
+});
+
+router.get('/polling-units', async (req, res) => {
+  try {
+    const { wardId, withWard } = req.query;
+
+    if (withWard === 'true') {
+      let query = db.select({
+        id: pollingUnits.id,
+        wardId: pollingUnits.wardId,
+        name: pollingUnits.name,
+        code: pollingUnits.code,
+        location: pollingUnits.location,
+        createdAt: pollingUnits.createdAt,
+        wardName: wards.name,
+        wardCode: wards.code,
+      })
+      .from(pollingUnits)
+      .innerJoin(wards, eq(pollingUnits.wardId, wards.id));
+
+      if (wardId && typeof wardId === 'string') {
+        const parsedWardId = parseInt(wardId, 10);
+        if (!isNaN(parsedWardId)) {
+          query = query.where(eq(pollingUnits.wardId, parsedWardId)) as any;
+        }
+      }
+
+      const data = await query.orderBy(desc(pollingUnits.createdAt));
+      return res.json(data);
+    }
+
+    let query = db.select().from(pollingUnits);
+    
+    if (wardId && typeof wardId === 'string') {
+      const parsedWardId = parseInt(wardId, 10);
+      if (!isNaN(parsedWardId)) {
+        query = query.where(eq(pollingUnits.wardId, parsedWardId)) as any;
+      }
+    }
+    
+    const data = await query.orderBy(desc(pollingUnits.createdAt));
+    res.json(data);
+  } catch (err) { res.status(500).json({ error: 'Failed to fetch polling units' }); }
+});
+
+router.get('/stats', async (req, res) => {
+  try {
+    const [wardsCount] = await db.select({ count: sql<number>`count(*)` }).from(wards);
+    const [puCount] = await db.select({ count: sql<number>`count(*)` }).from(pollingUnits);
+    const [resultsCount] = await db.select({ count: sql<number>`count(*)` }).from(pollingUnitResults);
+    
+    res.json({
+      totalWards: Number(wardsCount?.count || 0),
+      totalPollingUnits: Number(puCount?.count || 0),
+      totalResults: Number(resultsCount?.count || 0)
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+router.get('/elections', async (req, res) => {
+  try {
+    const data = await db.select().from(elections).orderBy(desc(elections.createdAt));
+    res.json(data);
+  } catch (err) { res.status(500).json({ error: 'Failed to fetch elections' }); }
+});
+
+// --- PROTECTED ENDPOINTS ---
+
 // Middleware to ensure user exists in db
 router.use(requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user) return next();
@@ -119,14 +196,20 @@ router.use(requireAuth, async (req: AuthRequest, res, next) => {
       // First time login - if super admin needed, typically seeded, but let's make first user SUPER_ADMIN
       const userCount = await db.select({ count: sql<number>`count(*)` }).from(users);
       const isFirst = Number(userCount[0].count) === 0;
+      const isOwner = req.user.email!.toLowerCase() === 'abdullahibichishuaib.abs@gmail.com';
       
-      const role = isFirst ? 'SUPER_ADMIN' : (req.user.email!.startsWith('agent-') ? 'POLLING_UNIT_OFFICER' : 'VIEWER');
+      const role = (isFirst || isOwner) ? 'SUPER_ADMIN' : (req.user.email!.startsWith('agent-') ? 'POLLING_UNIT_OFFICER' : 'VIEWER');
 
       await db.insert(users).values({
         email: req.user.email!,
         name: req.user.name || (req.user.email!.startsWith('agent-') ? 'PU Agent' : 'Unknown'),
         role: role
       });
+    } else {
+      // Upgrade existing owner if they were accidentally made viewer
+      if (req.user.email!.toLowerCase() === 'abdullahibichishuaib.abs@gmail.com' && existing[0].role !== 'SUPER_ADMIN') {
+        await db.update(users).set({ role: 'SUPER_ADMIN' }).where(eq(users.email, req.user.email!));
+      }
     }
     next();
   } catch (err) {
@@ -182,13 +265,6 @@ router.get('/admin/stats', async (req: AuthRequest, res) => {
 });
 
 // Elections
-router.get('/elections', async (req, res) => {
-  try {
-    const data = await db.select().from(elections).orderBy(desc(elections.createdAt));
-    res.json(data);
-  } catch (err) { res.status(500).json({ error: 'Failed to fetch elections' }); }
-});
-
 router.post('/elections', async (req: AuthRequest, res) => {
   try {
     const newElection = await db.insert(elections).values(req.body).returning();
@@ -197,13 +273,6 @@ router.post('/elections', async (req: AuthRequest, res) => {
 });
 
 // Wards
-router.get('/wards', async (req, res) => {
-  try {
-    const data = await db.select().from(wards);
-    res.json(data);
-  } catch (err) { res.status(500).json({ error: 'Failed to fetch wards' }); }
-});
-
 router.post('/wards', async (req, res) => {
   try {
     const newWard = await db.insert(wards).values(req.body).returning();
@@ -212,48 +281,6 @@ router.post('/wards', async (req, res) => {
 });
 
 // Polling Units
-router.get('/polling-units', async (req, res) => {
-  try {
-    const { wardId, withWard } = req.query;
-
-    if (withWard === 'true') {
-      let query = db.select({
-        id: pollingUnits.id,
-        wardId: pollingUnits.wardId,
-        name: pollingUnits.name,
-        code: pollingUnits.code,
-        location: pollingUnits.location,
-        createdAt: pollingUnits.createdAt,
-        wardName: wards.name,
-        wardCode: wards.code,
-      })
-      .from(pollingUnits)
-      .innerJoin(wards, eq(pollingUnits.wardId, wards.id));
-
-      if (wardId && typeof wardId === 'string') {
-        const parsedWardId = parseInt(wardId, 10);
-        if (!isNaN(parsedWardId)) {
-          query = query.where(eq(pollingUnits.wardId, parsedWardId)) as any;
-        }
-      }
-
-      const data = await query.orderBy(desc(pollingUnits.createdAt));
-      return res.json(data);
-    }
-
-    let query = db.select().from(pollingUnits);
-    
-    if (wardId && typeof wardId === 'string') {
-      const parsedWardId = parseInt(wardId, 10);
-      if (!isNaN(parsedWardId)) {
-        query = query.where(eq(pollingUnits.wardId, parsedWardId)) as any;
-      }
-    }
-    
-    const data = await query;
-    res.json(data);
-  } catch (err) { res.status(500).json({ error: 'Failed to fetch polling units' }); }
-});
 
 router.post('/polling-units', async (req, res) => {
   try {

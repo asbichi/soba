@@ -375,10 +375,10 @@ export function Admin() {
     const query = puSearchQuery.trim().toLowerCase();
     const matchesSearch =
       !query ||
-      pu.code.toLowerCase().includes(query) ||
-      pu.name.toLowerCase().includes(query) ||
+      (pu.code && pu.code.toLowerCase().includes(query)) ||
+      (pu.name && pu.name.toLowerCase().includes(query)) ||
       (pu.location && pu.location.toLowerCase().includes(query)) ||
-      pu.wardName.toLowerCase().includes(query);
+      (pu.wardName && pu.wardName.toLowerCase().includes(query));
 
     return matchesWard && matchesSearch;
   });
@@ -392,8 +392,8 @@ export function Admin() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">System Administration</h1>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            <h1 className="text-3xl font-extrabold text-[#484848] tracking-tight">System Administration</h1>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
               <ShieldCheck className="w-3.5 h-3.5" />
               Super Admin Authorization
             </span>
@@ -418,7 +418,7 @@ export function Admin() {
               fetchPollingUnits();
             }}
             disabled={loadingPUs || loadingStats}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-800 transition-colors shadow-sm disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#5cb85c] text-white rounded-lg text-sm font-semibold hover:bg-green-600 transition-colors shadow-sm disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loadingPUs ? 'animate-spin' : ''}`} />
             Refresh Data

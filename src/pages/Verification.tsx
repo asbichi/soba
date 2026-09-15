@@ -63,7 +63,7 @@ export function Verification() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Result Verification</h1>
+        <h1 className="text-3xl font-extrabold text-[#484848] tracking-tight">Result Verification</h1>
         <p className="mt-2 text-sm text-slate-500">Review and verify submitted polling unit results against uploaded evidence.</p>
       </div>
 
@@ -96,7 +96,7 @@ export function Verification() {
                       <button
                         onClick={() => handleVerify(result.id, 'VERIFIED')}
                         disabled={processing === result.id}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg font-bold transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-[#5cb85c] hover:bg-green-100 rounded-lg font-bold transition-colors disabled:opacity-50"
                       >
                         <CheckCircle className="w-4 h-4" />
                         Verify

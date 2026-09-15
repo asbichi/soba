@@ -6,10 +6,9 @@ import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
 import { ResultEntry } from './pages/ResultEntry';
 import { Verification } from './pages/Verification';
-
 import { Admin } from './pages/Admin';
-
 import { Reports } from './pages/Reports';
+import { IRevPortal } from './pages/IRevPortal';
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode, requiredRole?: string[] }) {
   const { user, dbUser, loading } = useAuth();
@@ -29,9 +28,10 @@ export default function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          <Route path="/" element={<IRevPortal />} />
           <Route path="/login" element={<Login />} />
           
-          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />
             <Route path="results/entry" element={
               <ProtectedRoute requiredRole={['POLLING_UNIT_OFFICER', 'SUPER_ADMIN']}>
@@ -44,7 +44,7 @@ export default function App() {
               </ProtectedRoute>
             } />
             <Route path="reports" element={
-              <ProtectedRoute requiredRole={['SUPER_ADMIN', 'COLLATION_OFFICER', 'VIEWER']}>
+              <ProtectedRoute requiredRole={['SUPER_ADMIN', 'COLLATION_OFFICER', 'VIEWER', 'POLLING_UNIT_OFFICER']}>
                 <Reports />
               </ProtectedRoute>
             } />
