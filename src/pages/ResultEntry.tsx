@@ -234,8 +234,20 @@ export function ResultEntry() {
             <tbody className="divide-y divide-slate-200">
               {candidates.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
-                    {c.partyAbbr} <span className="text-slate-500 font-medium ml-1">({c.name})</span>
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <div className="flex items-center space-x-4">
+                      {c.partyLogo ? (
+                        <img src={c.partyLogo} alt={c.partyAbbr} className="w-10 h-10 rounded-full border border-slate-200 shadow-sm object-cover" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center">
+                          <span className="text-xs font-bold text-slate-500">{c.partyAbbr}</span>
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">{c.partyAbbr}</div>
+                        <div className="text-xs font-medium text-slate-500">{c.name}</div>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-4 py-2 whitespace-nowrap text-right">
                     <input 

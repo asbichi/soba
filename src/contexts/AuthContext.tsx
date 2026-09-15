@@ -28,14 +28,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [demoToken, setDemoToken] = useState<string | null>(localStorage.getItem('demo_token'));
 
   useEffect(() => {
-    if (demoToken === 'ASBICHI_DEMO_TOKEN') {
-      const mockUser = { uid: 'asbichi', email: 'asbichi@soba.local' } as User;
-      // Provide a mock getIdToken that returns the static token string
-      mockUser.getIdToken = async () => 'ASBICHI_DEMO_TOKEN';
+    if (demoToken === 'ASBICHI_DEMO_TOKEN' || demoToken?.startsWith('AGENT_DEMO_TOKEN_')) {
+      const username = demoToken === 'ASBICHI_DEMO_TOKEN' ? 'asbichi' : demoToken?.replace('AGENT_DEMO_TOKEN_', '');
+      const mockUser = { uid: username, email: `${username}@soba.local` } as User;
+      mockUser.getIdToken = async () => demoToken!;
       setUser(mockUser);
       
       fetch('/api/me', {
-        headers: { Authorization: `Bearer ASBICHI_DEMO_TOKEN` }
+        headers: { Authorization: `Bearer ${demoToken}` }
       }).then(async (res) => {
         if (res.ok) setDbUser(await res.json());
         setLoading(false);
@@ -81,6 +81,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (username.toLowerCase() === 'asbichi') {
       localStorage.setItem('demo_token', 'ASBICHI_DEMO_TOKEN');
       setDemoToken('ASBICHI_DEMO_TOKEN');
+    } else if (username.toLowerCase().startsWith('agent-')) {
+      const token = `AGENT_DEMO_TOKEN_${username.toLowerCase()}`;
+      localStorage.setItem('demo_token', token);
+      setDemoToken(token);
     } else {
       throw new Error('Invalid credentials');
     }

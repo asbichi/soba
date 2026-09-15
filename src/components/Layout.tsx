@@ -22,18 +22,18 @@ export function Layout() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
+    <div className="min-h-screen bg-zinc-50 flex flex-col md:flex-row font-sans">
       {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between bg-slate-900 border-b border-slate-800 p-4">
+      <div className="md:hidden flex items-center justify-between bg-zinc-900 border-b border-zinc-800 p-4">
         <span className="text-xl font-bold text-white tracking-tight">Soba LGA</span>
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-slate-300 hover:text-white transition-colors">
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-zinc-300 hover:text-white transition-colors">
           <Menu className="w-6 h-6" />
         </button>
       </div>
 
       {/* Sidebar */}
       <div className={clsx(
-        "bg-slate-900 w-full md:w-64 border-r border-slate-800 flex-col justify-between hidden md:flex",
+        "bg-zinc-900 w-full md:w-64 border-r border-zinc-800 flex-col justify-between hidden md:flex",
         mobileMenuOpen ? "!flex absolute z-50 h-full w-64 shadow-2xl" : ""
       )}>
         <div>
@@ -48,13 +48,13 @@ export function Layout() {
                   key={item.name}
                   to={item.href}
                   className={clsx(
-                    isActive ? "bg-emerald-500/10 text-emerald-400" : "text-slate-300 hover:bg-slate-800 hover:text-white",
+                    isActive ? "bg-emerald-500/10 text-emerald-400" : "text-zinc-300 hover:bg-zinc-800 hover:text-white",
                     "group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200"
                   )}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <item.icon className={clsx(
-                    isActive ? "text-emerald-400" : "text-slate-400 group-hover:text-slate-300",
+                    isActive ? "text-emerald-400" : "text-zinc-400 group-hover:text-zinc-300",
                     "flex-shrink-0 -ml-1 mr-3 h-5 w-5 transition-colors"
                   )} />
                   {item.name}
@@ -63,7 +63,7 @@ export function Layout() {
             })}
           </nav>
         </div>
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-zinc-800">
           <div className="flex items-center mb-4">
             <div className="ml-3">
               <p className="text-sm font-medium text-white truncate">{dbUser?.name}</p>

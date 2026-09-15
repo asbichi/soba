@@ -46,13 +46,42 @@ router.post('/seed-demo', async (req, res) => {
       sobaWards.map(w => ({ name: w.name, code: `WD-${w.code}` }))
     ).returning();
 
-    const [partyA] = await db.insert(parties).values({ name: 'All Progressives Congress', abbreviation: 'APC' }).returning();
-    const [partyB] = await db.insert(parties).values({ name: 'Peoples Democratic Party', abbreviation: 'PDP' }).returning();
-    const [partyC] = await db.insert(parties).values({ name: 'Labour Party', abbreviation: 'LP' }).returning();
+    const inecParties = [
+      { name: 'Accord', abbreviation: 'A', color: '006600' },
+      { name: 'Action Alliance', abbreviation: 'AA', color: 'FF6600' },
+      { name: 'African Action Congress', abbreviation: 'AAC', color: 'FF0000' },
+      { name: 'African Democratic Congress', abbreviation: 'ADC', color: '006600' },
+      { name: 'Action Democratic Party', abbreviation: 'ADP', color: 'FF0000' },
+      { name: 'All Progressives Congress', abbreviation: 'APC', color: '0099FF' },
+      { name: 'All Progressives Grand Alliance', abbreviation: 'APGA', color: '006600' },
+      { name: 'Allied Peoples Movement', abbreviation: 'APM', color: '000000' },
+      { name: 'Action Peoples Party', abbreviation: 'APP', color: '003366' },
+      { name: 'Boot Party', abbreviation: 'BP', color: '009900' },
+      { name: 'Labour Party', abbreviation: 'LP', color: 'FF0000' },
+      { name: 'New Nigeria Peoples Party', abbreviation: 'NNPP', color: '003399' },
+      { name: 'National Rescue Movement', abbreviation: 'NRM', color: 'FF9900' },
+      { name: 'Peoples Democratic Party', abbreviation: 'PDP', color: '006600' },
+      { name: 'Peoples Redemption Party', abbreviation: 'PRP', color: 'FF0000' },
+      { name: 'Social Democratic Party', abbreviation: 'SDP', color: '000000' },
+      { name: 'Young Progressives Party', abbreviation: 'YPP', color: 'FFCC00' },
+      { name: 'Zenith Labour Party', abbreviation: 'ZLP', color: 'FF0000' }
+    ];
+
+    const newParties = await db.insert(parties).values(
+      inecParties.map(p => ({
+        name: p.name,
+        abbreviation: p.abbreviation,
+        logoUrl: `https://ui-avatars.com/api/?name=${p.abbreviation}&background=${p.color}&color=fff&size=128&font-size=0.33`
+      }))
+    ).returning();
     
-    const [candA] = await db.insert(candidates).values({ electionId: election.id, partyId: partyA.id, name: 'APC Candidate' }).returning();
-    const [candB] = await db.insert(candidates).values({ electionId: election.id, partyId: partyB.id, name: 'PDP Candidate' }).returning();
-    const [candC] = await db.insert(candidates).values({ electionId: election.id, partyId: partyC.id, name: 'LP Candidate' }).returning();
+    await db.insert(candidates).values(
+      newParties.map(p => ({
+        electionId: election.id,
+        partyId: p.id,
+        name: `${p.abbreviation} Candidate`
+      }))
+    );
 
     const puInserts: any[] = [];
     sobaWards.forEach((wardData, index) => {
@@ -91,10 +120,12 @@ router.use(requireAuth, async (req: AuthRequest, res, next) => {
       const userCount = await db.select({ count: sql<number>`count(*)` }).from(users);
       const isFirst = Number(userCount[0].count) === 0;
       
+      const role = isFirst ? 'SUPER_ADMIN' : (req.user.email!.startsWith('agent-') ? 'POLLING_UNIT_OFFICER' : 'VIEWER');
+
       await db.insert(users).values({
         email: req.user.email!,
-        name: req.user.name || 'Unknown',
-        role: isFirst ? 'SUPER_ADMIN' : 'VIEWER'
+        name: req.user.name || (req.user.email!.startsWith('agent-') ? 'PU Agent' : 'Unknown'),
+        role: role
       });
     }
     next();
@@ -110,6 +141,43 @@ router.get('/me', async (req: AuthRequest, res) => {
     res.json(user[0]);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+// Admin stats
+router.get('/admin/stats', async (req: AuthRequest, res) => {
+  try {
+    const [wardsCount] = await db.select({ count: sql<number>`count(*)` }).from(wards);
+    const [puCount] = await db.select({ count: sql<number>`count(*)` }).from(pollingUnits);
+    const [resultsCount] = await db.select({ count: sql<number>`count(*)` }).from(pollingUnitResults);
+    const [usersCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
+    
+    // Recent logs
+    const recentLogs = await db.select({
+      id: auditLogs.id,
+      action: auditLogs.action,
+      entityType: auditLogs.entityType,
+      entityId: auditLogs.entityId,
+      newValue: auditLogs.newValue,
+      createdAt: auditLogs.createdAt,
+      userEmail: users.email,
+      userName: users.name
+    })
+    .from(auditLogs)
+    .leftJoin(users, eq(auditLogs.userId, users.id))
+    .orderBy(desc(auditLogs.createdAt))
+    .limit(10);
+
+    res.json({
+      totalWards: Number(wardsCount?.count || 0),
+      totalPollingUnits: Number(puCount?.count || 0),
+      totalResults: Number(resultsCount?.count || 0),
+      totalUsers: Number(usersCount?.count || 0),
+      recentLogs
+    });
+  } catch (err) {
+    console.error('Failed to fetch admin stats', err);
+    res.status(500).json({ error: 'Failed to fetch admin stats' });
   }
 });
 
@@ -146,7 +214,33 @@ router.post('/wards', async (req, res) => {
 // Polling Units
 router.get('/polling-units', async (req, res) => {
   try {
-    const { wardId } = req.query;
+    const { wardId, withWard } = req.query;
+
+    if (withWard === 'true') {
+      let query = db.select({
+        id: pollingUnits.id,
+        wardId: pollingUnits.wardId,
+        name: pollingUnits.name,
+        code: pollingUnits.code,
+        location: pollingUnits.location,
+        createdAt: pollingUnits.createdAt,
+        wardName: wards.name,
+        wardCode: wards.code,
+      })
+      .from(pollingUnits)
+      .innerJoin(wards, eq(pollingUnits.wardId, wards.id));
+
+      if (wardId && typeof wardId === 'string') {
+        const parsedWardId = parseInt(wardId, 10);
+        if (!isNaN(parsedWardId)) {
+          query = query.where(eq(pollingUnits.wardId, parsedWardId)) as any;
+        }
+      }
+
+      const data = await query.orderBy(desc(pollingUnits.createdAt));
+      return res.json(data);
+    }
+
     let query = db.select().from(pollingUnits);
     
     if (wardId && typeof wardId === 'string') {
@@ -168,18 +262,227 @@ router.post('/polling-units', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Failed to create polling unit' }); }
 });
 
-// Bulk Import PU
+// Bulk Import PU via CSV
 router.post('/polling-units/import', upload.single('file'), async (req: AuthRequest, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file' });
-  
   try {
-    const csvData = req.file.buffer.toString();
-    const parsed = Papa.parse(csvData, { header: true, skipEmptyLines: true });
-    
-    // Simple naive import assuming Ward Code exists
-    // More complex validation required in real scenario
-    res.json({ message: 'Import queued/processed' });
-  } catch (err) { res.status(500).json({ error: 'Failed to import' }); }
+    // 1. Verify Super Admin role
+    const dbUserArr = await db.select().from(users).where(eq(users.email, req.user!.email!));
+    if (!dbUserArr.length || dbUserArr[0].role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Access denied: Super Admin authorization required for bulk upload.' });
+    }
+    const dbUser = dbUserArr[0];
+
+    // 2. Retrieve CSV content
+    let csvData = '';
+    if (req.file) {
+      csvData = req.file.buffer.toString('utf-8');
+    } else if (req.body && req.body.csv) {
+      csvData = req.body.csv;
+    } else {
+      return res.status(400).json({ error: 'No CSV file or data provided.' });
+    }
+
+    // Options from request
+    const autoCreateWards = req.body.autoCreateWards !== false && req.body.autoCreateWards !== 'false';
+    const updateExisting = req.body.updateExisting !== false && req.body.updateExisting !== 'false';
+
+    // 3. Parse CSV with PapaParse
+    const parsed = Papa.parse<Record<string, any>>(csvData, {
+      header: true,
+      skipEmptyLines: 'greedy',
+      dynamicTyping: false
+    });
+
+    if (parsed.errors && parsed.errors.length > 0 && parsed.data.length === 0) {
+      return res.status(400).json({ 
+        error: `CSV Parsing error: ${parsed.errors[0]?.message || 'Invalid CSV format'}` 
+      });
+    }
+
+    if (!parsed.data || parsed.data.length === 0) {
+      return res.status(400).json({ error: 'CSV file contains no valid data rows.' });
+    }
+
+    // 4. Cache existing wards and polling units for fast in-memory matching
+    const currentWards = await db.select().from(wards);
+    const wardByCode = new Map<string, typeof currentWards[0]>();
+    const wardByName = new Map<string, typeof currentWards[0]>();
+
+    currentWards.forEach(w => {
+      if (w.code) wardByCode.set(w.code.trim().toUpperCase(), w);
+      if (w.name) wardByName.set(w.name.trim().toUpperCase(), w);
+    });
+
+    const currentPUs = await db.select().from(pollingUnits);
+    const puByCode = new Map<string, typeof currentPUs[0]>();
+    currentPUs.forEach(p => {
+      if (p.code) puByCode.set(p.code.trim().toUpperCase(), p);
+    });
+
+    let importedCount = 0;
+    let updatedCount = 0;
+    let skippedCount = 0;
+    let wardsCreatedCount = 0;
+    const errors: Array<{ row: number; code?: string; error: string }> = [];
+
+    // Helper to normalize keys across common CSV header variations
+    const normalizeRow = (raw: Record<string, any>) => {
+      const norm: Record<string, string> = {};
+      for (const [key, val] of Object.entries(raw)) {
+        if (val !== undefined && val !== null) {
+          const cleanKey = key.trim().toLowerCase().replace(/[\s_-]+/g, '');
+          norm[cleanKey] = String(val).trim();
+        }
+      }
+      return {
+        wardCode: norm['wardcode'] || norm['wardid'] || norm['wardno'] || '',
+        wardName: norm['wardname'] || norm['ward'] || '',
+        puCode: norm['pucode'] || norm['code'] || norm['pollingunitcode'] || norm['unitcode'] || norm['pu'] || '',
+        puName: norm['puname'] || norm['name'] || norm['pollingunitname'] || norm['unitname'] || norm['pollingunit'] || '',
+        location: norm['location'] || norm['pulocation'] || norm['address'] || norm['description'] || ''
+      };
+    };
+
+    for (let index = 0; index < parsed.data.length; index++) {
+      const rowNum = index + 2; // Row 1 is header
+      const row = parsed.data[index];
+      const { wardCode, wardName, puCode, puName, location } = normalizeRow(row);
+
+      // Skip entirely empty row
+      if (!wardCode && !wardName && !puCode && !puName) {
+        continue;
+      }
+
+      if (!puCode) {
+        errors.push({ row: rowNum, error: 'Missing Polling Unit Code (e.g. PU-01-001).' });
+        continue;
+      }
+
+      if (!puName) {
+        errors.push({ row: rowNum, code: puCode, error: 'Missing Polling Unit Name.' });
+        continue;
+      }
+
+      // Resolve Ward
+      let targetWard: typeof currentWards[0] | null = null;
+      if (wardCode && wardByCode.has(wardCode.toUpperCase())) {
+        targetWard = wardByCode.get(wardCode.toUpperCase())!;
+      } else if (wardName && wardByName.has(wardName.toUpperCase())) {
+        targetWard = wardByName.get(wardName.toUpperCase())!;
+      }
+
+      if (!targetWard) {
+        if (autoCreateWards && (wardCode || wardName)) {
+          const cleanWardName = wardName || wardCode;
+          const finalWardCode = wardCode 
+            ? wardCode.toUpperCase() 
+            : `WD-${cleanWardName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 8)}`;
+          
+          try {
+            if (wardByCode.has(finalWardCode)) {
+              targetWard = wardByCode.get(finalWardCode)!;
+            } else {
+              const [newWard] = await db.insert(wards).values({
+                code: finalWardCode,
+                name: cleanWardName
+              }).returning();
+              
+              targetWard = newWard;
+              wardByCode.set(newWard.code.trim().toUpperCase(), newWard);
+              wardByName.set(newWard.name.trim().toUpperCase(), newWard);
+              wardsCreatedCount++;
+            }
+          } catch (wErr: any) {
+            errors.push({ row: rowNum, code: puCode, error: `Failed to create ward '${cleanWardName}' (${finalWardCode}): ${wErr.message}` });
+            continue;
+          }
+        } else {
+          errors.push({ 
+            row: rowNum, 
+            code: puCode, 
+            error: `Ward '${wardCode || wardName || 'Unspecified'}' does not exist in database.` 
+          });
+          continue;
+        }
+      }
+
+      // Check for Polling Unit duplicate / existing
+      const cleanPuCode = puCode.trim();
+      const existingPU = puByCode.get(cleanPuCode.toUpperCase());
+
+      if (existingPU) {
+        if (updateExisting) {
+          try {
+            await db.update(pollingUnits).set({
+              name: puName,
+              wardId: targetWard.id,
+              location: location || existingPU.location || null
+            }).where(eq(pollingUnits.id, existingPU.id));
+            
+            puByCode.set(cleanPuCode.toUpperCase(), {
+              ...existingPU,
+              name: puName,
+              wardId: targetWard.id,
+              location: location || existingPU.location || null
+            });
+            updatedCount++;
+          } catch (upErr: any) {
+            errors.push({ row: rowNum, code: cleanPuCode, error: `Failed to update: ${upErr.message}` });
+          }
+        } else {
+          skippedCount++;
+        }
+      } else {
+        try {
+          const [inserted] = await db.insert(pollingUnits).values({
+            code: cleanPuCode,
+            name: puName,
+            wardId: targetWard.id,
+            location: location || null
+          }).returning();
+
+          puByCode.set(cleanPuCode.toUpperCase(), inserted);
+          importedCount++;
+        } catch (inErr: any) {
+          errors.push({ row: rowNum, code: cleanPuCode, error: `Failed to insert: ${inErr.message}` });
+        }
+      }
+    }
+
+    // Write Audit Log
+    try {
+      await db.insert(auditLogs).values({
+        userId: dbUser.id,
+        action: 'POLLING_UNITS_BULK_UPLOAD',
+        entityType: 'pollingUnits',
+        newValue: JSON.stringify({
+          importedCount,
+          updatedCount,
+          skippedCount,
+          failedCount: errors.length,
+          wardsCreated: wardsCreatedCount
+        })
+      });
+    } catch (logErr) {
+      console.error('Failed to write audit log for bulk upload:', logErr);
+    }
+
+    res.json({
+      success: true,
+      message: `Bulk upload completed: ${importedCount} created, ${updatedCount} updated, ${skippedCount} skipped, ${errors.length} failed.`,
+      totalRows: parsed.data.length,
+      importedCount,
+      updatedCount,
+      skippedCount,
+      failedCount: errors.length,
+      wardsCreated: wardsCreatedCount,
+      errors
+    });
+
+  } catch (err: any) {
+    console.error('Bulk PU import fatal error:', err);
+    res.status(500).json({ error: `Bulk upload failed: ${err.message || 'Server error'}` });
+  }
 });
 
 // Parties
@@ -206,7 +509,8 @@ router.get('/candidates', async (req, res) => {
       partyId: candidates.partyId,
       name: candidates.name,
       partyAbbr: parties.abbreviation,
-      partyName: parties.name
+      partyName: parties.name,
+      partyLogo: parties.logoUrl
     })
     .from(candidates)
     .innerJoin(parties, eq(candidates.partyId, parties.id));

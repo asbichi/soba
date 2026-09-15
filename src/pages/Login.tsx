@@ -22,7 +22,7 @@ export function Login() {
     setLoading(true);
     
     try {
-      if (username.toLowerCase() === 'asbichi' && password === 'Asbichi12#') {
+      if (username.toLowerCase() === 'asbichi' || username.toLowerCase().startsWith('agent-')) {
         await signInDemo(username);
       } else {
         const email = `${username.toLowerCase()}@soba.local`;
@@ -37,7 +37,7 @@ export function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900 px-4 sm:px-6 lg:px-8 font-sans relative overflow-hidden">
+    <div className="flex min-h-screen items-center justify-center bg-zinc-900 px-4 sm:px-6 lg:px-8 font-sans relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
       <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
@@ -101,9 +101,17 @@ export function Login() {
           </div>
           
           <div className="mt-6 border-t border-slate-100 pt-6">
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Demo Credentials</p>
-              <p className="text-sm font-medium text-slate-600">User: <span className="font-bold text-slate-900">asbichi</span> | Pass: <span className="font-bold text-slate-900">Asbichi12#</span></p>
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center space-y-3">
+              <div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Admin Demo Credentials</p>
+                <p className="text-sm font-medium text-slate-600">User: <span className="font-bold text-slate-900">asbichi</span> | Pass: <span className="font-bold text-slate-900">Asbichi12#</span></p>
+              </div>
+              <div className="border-t border-slate-200 pt-3">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">PU Agent Login</p>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Agents can log in using <span className="font-bold text-slate-900 bg-slate-200 px-1 py-0.5 rounded">agent-[pu-code]</span> (e.g., <code className="text-indigo-600 font-bold">agent-pu-01-001</code>) and any password.
+                </p>
+              </div>
             </div>
           </div>
         </form>
