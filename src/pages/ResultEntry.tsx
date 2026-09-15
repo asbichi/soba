@@ -172,19 +172,19 @@ export function ResultEntry() {
           <div>
             <label className="block text-sm font-semibold text-slate-700">Election</label>
             <select 
-              className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-2.5 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-shadow"
+              className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-3 focus:ring-emerald-500 focus:border-emerald-500 text-base sm:text-sm transition-shadow bg-white"
               value={selectedElection}
               onChange={(e) => setSelectedElection(e.target.value)}
               required
             >
               <option value="">Select Election</option>
-              {elections.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
+              {elections.map(e => <option key={e.id} value={e.id}>{e.name || e.title}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-semibold text-slate-700">Ward</label>
             <select 
-              className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-2.5 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-shadow"
+              className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-3 focus:ring-emerald-500 focus:border-emerald-500 text-base sm:text-sm transition-shadow bg-white"
               value={selectedWard}
               onChange={(e) => setSelectedWard(e.target.value)}
               required
@@ -196,7 +196,7 @@ export function ResultEntry() {
           <div className="col-span-1 md:col-span-2">
             <label className="block text-sm font-semibold text-slate-700">Polling Unit</label>
             <select 
-              className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-2.5 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-shadow disabled:bg-slate-50 disabled:text-slate-400"
+              className="mt-2 block w-full rounded-lg border-slate-300 shadow-sm border p-3 focus:ring-emerald-500 focus:border-emerald-500 text-base sm:text-sm transition-shadow disabled:bg-slate-50 disabled:text-slate-400 bg-white"
               value={selectedPU}
               onChange={(e) => setSelectedPU(e.target.value)}
               required

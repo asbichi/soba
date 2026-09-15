@@ -821,7 +821,7 @@ export function Admin() {
               <select
                 value={selectedWardFilter}
                 onChange={(e) => setSelectedWardFilter(e.target.value)}
-                className="text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="text-base sm:text-sm bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="ALL">All Wards ({wards.length})</option>
                 {wards.map((w) => (
@@ -840,7 +840,7 @@ export function Admin() {
                 value={puSearchQuery}
                 onChange={(e) => setPuSearchQuery(e.target.value)}
                 placeholder="Search code or name..."
-                className="text-xs sm:text-sm pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-44 sm:w-56"
+                className="text-base sm:text-sm pl-9 pr-4 py-2.5 sm:py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48 sm:w-56"
               />
             </div>
           </div>
