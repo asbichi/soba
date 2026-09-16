@@ -41,9 +41,15 @@ export function IRevPortal() {
               <h1 className="text-xl font-bold text-[#484848] leading-tight">TRACKER OF SOBA ELECTION<br/><span className="text-sm font-normal text-slate-500">Tracking Result of Soba LGA</span></h1>
             </div>
           </div>
-          <Link to="/login" className="text-sm font-semibold text-[#5cb85c] hover:text-green-700">
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-red-50 text-red-700 rounded-full text-xs font-bold border border-red-100 shadow-sm">
+              <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+              LIVE UPDATES
+            </div>
+            <Link to="/login" className="text-sm font-semibold text-[#5cb85c] hover:text-green-700">
             Officer Login
           </Link>
+          </div>
         </div>
       </header>
 
@@ -51,8 +57,9 @@ export function IRevPortal() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
         
         {/* Banner */}
-        <div className="bg-[#484848] rounded-xl p-8 text-white shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mt-20 -mr-20"></div>
+        <div className="bg-gradient-to-br from-red-800 via-red-900 to-slate-900 rounded-xl p-8 text-white shadow-xl relative overflow-hidden ring-1 ring-red-900/50">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-red-500 opacity-20 rounded-full blur-3xl -mt-10 -mr-10"></div>
+          <div className="absolute bottom-0 left-20 w-48 h-48 bg-red-600 opacity-20 rounded-full blur-2xl -mb-10"></div>
           <h2 className="text-3xl font-extrabold mb-2 relative z-10">Public Results Viewing Portal</h2>
           <p className="text-slate-300 max-w-2xl text-sm relative z-10">
             Access verified election results from polling units across Soba LGA in real-time. Transparency and credibility through digital collation.

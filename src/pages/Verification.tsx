@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, FileText } from 'lucide-react';
 
 export function Verification() {
   const { user } = useAuth() as any;
@@ -75,6 +75,7 @@ export function Verification() {
                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Ward & Polling Unit</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Submitted By</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Time</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Evidence</th>
                 <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
@@ -91,6 +92,15 @@ export function Verification() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-500">
                       {new Date(result.submittedAt).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-700">
+                      {result.evidenceUrl ? (
+                        <a href={result.evidenceUrl} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
+                           <FileText className="w-4 h-4" /> View EC8A
+                        </a>
+                      ) : (
+                        <span className="text-slate-400 italic">No file</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                       <button

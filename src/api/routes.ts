@@ -163,17 +163,87 @@ router.get('/polling-units', async (req, res) => {
 
 router.get('/stats', async (req, res) => {
   try {
-    const [wardsCount] = await db.select({ count: sql<number>`count(*)` }).from(wards);
-    const [puCount] = await db.select({ count: sql<number>`count(*)` }).from(pollingUnits);
-    const [resultsCount] = await db.select({ count: sql<number>`count(*)` }).from(pollingUnitResults);
-    
+    const totalWards = await db.select({ count: sql<number>`count(*)` }).from(wards);
+    const totalPUs = await db.select({ count: sql<number>`count(*)` }).from(pollingUnits);
+    const puResults = await db.select({
+      status: pollingUnitResults.status,
+      count: sql<number>`count(*)`
+    }).from(pollingUnitResults).groupBy(pollingUnitResults.status);
+
+    const aggregatedVotes = await db.select({
+      totalVotesCast: sql<number>`sum(${pollingUnitResults.totalVotesCast})`,
+      totalValidVotes: sql<number>`sum(${pollingUnitResults.totalValidVotes})`,
+    }).from(pollingUnitResults).where(eq(pollingUnitResults.status, 'VERIFIED'));
+
+    const candidateTotalsQuery = await db.select({
+      candidateId: candidateResults.candidateId,
+      partyId: candidateResults.partyId,
+      partyName: parties.name,
+      partyAbbr: parties.abbreviation,
+      candidateName: candidates.name,
+      totalVotes: sql<number>`sum(${candidateResults.votes})`
+    })
+    .from(candidateResults)
+    .innerJoin(pollingUnitResults, eq(candidateResults.pollingUnitResultId, pollingUnitResults.id))
+    .innerJoin(candidates, eq(candidateResults.candidateId, candidates.id))
+    .innerJoin(parties, eq(candidateResults.partyId, parties.id))
+    .where(eq(pollingUnitResults.status, 'VERIFIED'))
+    .groupBy(candidateResults.candidateId, candidateResults.partyId, parties.name, parties.abbreviation, candidates.name);
+
+    const wardTotalsQuery = await db.select({
+      wardName: wards.name,
+      partyAbbr: parties.abbreviation,
+      totalVotes: sql<number>`sum(${candidateResults.votes})`
+    })
+    .from(candidateResults)
+    .innerJoin(pollingUnitResults, eq(candidateResults.pollingUnitResultId, pollingUnitResults.id))
+    .innerJoin(pollingUnits, eq(pollingUnitResults.pollingUnitId, pollingUnits.id))
+    .innerJoin(wards, eq(pollingUnits.wardId, wards.id))
+    .innerJoin(parties, eq(candidateResults.partyId, parties.id))
+    .where(eq(pollingUnitResults.status, 'VERIFIED'))
+    .groupBy(wards.name, parties.abbreviation);
+
     res.json({
-      totalWards: Number(wardsCount?.count || 0),
-      totalPollingUnits: Number(puCount?.count || 0),
-      totalResults: Number(resultsCount?.count || 0)
+      totalWards: totalWards[0]?.count || 0,
+      totalPUs: totalPUs[0]?.count || 0,
+      resultsStats: puResults,
+      aggregatedVotes: aggregatedVotes[0] || { totalVotesCast: 0, totalValidVotes: 0 },
+      candidateTotals: candidateTotalsQuery || [],
+      wardTotals: wardTotalsQuery || []
     });
   } catch (err) {
+    console.error('Failed to fetch stats', err);
     res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+router.get('/reports/detailed-results', async (req, res) => {
+  try {
+    const puResults = await db.select({
+      puId: pollingUnits.id,
+      puName: pollingUnits.name,
+      puCode: pollingUnits.code,
+      location: pollingUnits.location,
+      wardName: wards.name,
+      wardCode: wards.code,
+      status: pollingUnitResults.status,
+      registeredVoters: pollingUnitResults.registeredVoters,
+      accreditedVoters: pollingUnitResults.accreditedVoters,
+      totalValidVotes: pollingUnitResults.totalValidVotes,
+      rejectedVotes: pollingUnitResults.rejectedVotes,
+      totalVotesCast: pollingUnitResults.totalVotesCast,
+      submittedAt: pollingUnitResults.submittedAt,
+      verifiedAt: pollingUnitResults.verifiedAt,
+    })
+    .from(pollingUnits)
+    .innerJoin(wards, eq(pollingUnits.wardId, wards.id))
+    .leftJoin(pollingUnitResults, eq(pollingUnits.id, pollingUnitResults.pollingUnitId))
+    .orderBy(wards.name, pollingUnits.name);
+
+    res.json(puResults);
+  } catch (err) {
+    console.error('Detailed results error', err);
+    res.status(500).json({ error: 'Failed to fetch detailed results' });
   }
 });
 
@@ -563,62 +633,6 @@ router.post('/candidates', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Failed to create candidate' }); }
 });
 
-router.get('/stats', async (req, res) => {
-  try {
-    const totalWards = await db.select({ count: sql<number>`count(*)` }).from(wards);
-    const totalPUs = await db.select({ count: sql<number>`count(*)` }).from(pollingUnits);
-    const puResults = await db.select({
-      status: pollingUnitResults.status,
-      count: sql<number>`count(*)`
-    }).from(pollingUnitResults).groupBy(pollingUnitResults.status);
-
-    const aggregatedVotes = await db.select({
-      totalVotesCast: sql<number>`sum(${pollingUnitResults.totalVotesCast})`,
-      totalValidVotes: sql<number>`sum(${pollingUnitResults.totalValidVotes})`,
-    }).from(pollingUnitResults).where(eq(pollingUnitResults.status, 'VERIFIED'));
-
-    const candidateTotalsQuery = await db.select({
-      candidateId: candidateResults.candidateId,
-      partyId: candidateResults.partyId,
-      partyName: parties.name,
-      partyAbbr: parties.abbreviation,
-      candidateName: candidates.name,
-      totalVotes: sql<number>`sum(${candidateResults.votes})`
-    })
-    .from(candidateResults)
-    .innerJoin(pollingUnitResults, eq(candidateResults.pollingUnitResultId, pollingUnitResults.id))
-    .innerJoin(candidates, eq(candidateResults.candidateId, candidates.id))
-    .innerJoin(parties, eq(candidateResults.partyId, parties.id))
-    .where(eq(pollingUnitResults.status, 'VERIFIED'))
-    .groupBy(candidateResults.candidateId, candidateResults.partyId, parties.name, parties.abbreviation, candidates.name);
-
-    const wardTotalsQuery = await db.select({
-      wardName: wards.name,
-      partyAbbr: parties.abbreviation,
-      totalVotes: sql<number>`sum(${candidateResults.votes})`
-    })
-    .from(candidateResults)
-    .innerJoin(pollingUnitResults, eq(candidateResults.pollingUnitResultId, pollingUnitResults.id))
-    .innerJoin(pollingUnits, eq(pollingUnitResults.pollingUnitId, pollingUnits.id))
-    .innerJoin(wards, eq(pollingUnits.wardId, wards.id))
-    .innerJoin(parties, eq(candidateResults.partyId, parties.id))
-    .where(eq(pollingUnitResults.status, 'VERIFIED'))
-    .groupBy(wards.name, parties.abbreviation);
-
-    res.json({
-      totalWards: totalWards[0].count,
-      totalPUs: totalPUs[0].count,
-      resultsStats: puResults,
-      aggregatedVotes: aggregatedVotes[0],
-      candidateTotals: candidateTotalsQuery,
-      wardTotals: wardTotalsQuery
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch stats' });
-  }
-});
-
 router.get('/results', async (req, res) => {
   try {
     const data = await db.select({
@@ -628,12 +642,14 @@ router.get('/results', async (req, res) => {
       wardName: wards.name,
       puName: pollingUnits.name,
       puCode: pollingUnits.code,
-      submittedBy: users.name
+      submittedBy: users.name,
+      evidenceUrl: resultEvidence.fileUrl
     })
     .from(pollingUnitResults)
     .innerJoin(pollingUnits, eq(pollingUnitResults.pollingUnitId, pollingUnits.id))
     .innerJoin(wards, eq(pollingUnits.wardId, wards.id))
     .innerJoin(users, eq(pollingUnitResults.submittedById, users.id))
+    .leftJoin(resultEvidence, eq(pollingUnitResults.id, resultEvidence.pollingUnitResultId))
     .where(eq(pollingUnitResults.status, 'SUBMITTED'));
     
     res.json(data);
@@ -645,7 +661,7 @@ router.get('/results', async (req, res) => {
 
 router.post('/results', async (req: AuthRequest, res) => {
   try {
-    const { electionId, pollingUnitId, registeredVoters, accreditedVoters, totalVotesCast, rejectedVotes, totalValidVotes, candidateVotes } = req.body;
+    const { electionId, pollingUnitId, registeredVoters, accreditedVoters, totalVotesCast, rejectedVotes, totalValidVotes, candidateVotes, evidence } = req.body;
     
     // Fetch db user
     const dbUserArr = await db.select().from(users).where(eq(users.email, req.user!.email!));

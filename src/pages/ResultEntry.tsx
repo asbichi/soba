@@ -24,6 +24,8 @@ export function ResultEntry() {
   const [rejectedVotes, setRejectedVotes] = useState('');
   const [totalVotesCast, setTotalVotesCast] = useState('');
   const [candidateVotes, setCandidateVotes] = useState<Record<string, string>>({});
+  const [evidenceName, setEvidenceName] = useState('');
+  const [evidenceBase64, setEvidenceBase64] = useState('');
 
   useEffect(() => {
     async function loadInitial() {
@@ -79,6 +81,22 @@ export function ResultEntry() {
 
   const totalValidVotes = Object.values(candidateVotes).reduce((sum, val) => Number(sum) + (parseInt(val as string) || 0), 0) as number;
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        setError('File size must be under 10MB');
+        return;
+      }
+      setEvidenceName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEvidenceBase64(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -114,6 +132,7 @@ export function ResultEntry() {
         rejectedVotes: rejV,
         totalValidVotes,
         totalVotesCast: totC,
+        evidence: evidenceBase64 ? { fileName: evidenceName, data: evidenceBase64 } : null,
         candidateVotes: candidates.map(c => ({
           candidateId: c.id,
           partyId: c.partyId,
@@ -236,16 +255,12 @@ export function ResultEntry() {
                 <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-4">
-                      {c.partyLogo ? (
-                        <img src={c.partyLogo} alt={c.partyAbbr} className="w-10 h-10 rounded-full border border-slate-200 shadow-sm object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center">
-                          <span className="text-xs font-bold text-slate-500">{c.partyAbbr}</span>
-                        </div>
-                      )}
-                      <div>
-                        <div className="text-sm font-bold text-slate-900">{c.partyAbbr}</div>
-                        <div className="text-xs font-medium text-slate-500">{c.name}</div>
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-300 flex items-center justify-center shadow-sm">
+                        <span className="text-sm font-black text-slate-800 tracking-tight">{c.partyAbbr}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-900">{c.partyName || c.partyAbbr}</span>
+                        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">{c.name}</span>
                       </div>
                     </div>
                   </td>
@@ -287,10 +302,11 @@ export function ResultEntry() {
               <div className="mt-4 flex text-sm leading-6 text-slate-600 justify-center">
                 <label className="relative cursor-pointer rounded-md font-bold text-[#5cb85c] hover:text-green-600">
                   <span>Upload official EC8A form (Optional)</span>
-                  <input id="file-upload" name="file-upload" type="file" className="sr-only" />
+                  <input id="file-upload" name="file-upload" type="file" className="sr-only" accept=".png,.jpg,.jpeg,.pdf" onChange={handleFileChange} />
                 </label>
               </div>
               <p className="text-xs leading-5 text-slate-500 mt-1">PNG, JPG, PDF up to 10MB</p>
+              {evidenceName && <p className="mt-2 text-sm font-bold text-[#5cb85c]">Selected: {evidenceName}</p>}
             </div>
           </div>
       </div>

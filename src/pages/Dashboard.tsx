@@ -57,10 +57,19 @@ export function Dashboard() {
       if (!chartDataMap[row.wardName]) {
         chartDataMap[row.wardName] = { name: row.wardName };
       }
-      chartDataMap[row.wardName][row.partyAbbr] = row.totalVotes;
+      chartDataMap[row.wardName][row.partyAbbr] = Number(row.totalVotes);
     });
   }
   const chartData = Object.values(chartDataMap);
+
+  // Get Top 5 Parties by overall votes for the chart
+  const sortedParties = [...candidateTotals]
+    .sort((a, b) => Number(b.totalVotes || 0) - Number(a.totalVotes || 0))
+    .map(c => c.partyAbbr)
+    .slice(0, 5);
+
+  const colors = ["#1e40af", "#dc2626", "#15803d", "#d97706", "#7e22ce"];
+
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -109,9 +118,9 @@ export function Dashboard() {
                   contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} 
                 />
                 <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                <Bar dataKey="APC" fill="#1e40af" radius={[6, 6, 0, 0]} maxBarSize={60} />
-                <Bar dataKey="PDP" fill="#dc2626" radius={[6, 6, 0, 0]} maxBarSize={60} />
-                <Bar dataKey="LP" fill="#15803d" radius={[6, 6, 0, 0]} maxBarSize={60} />
+                {sortedParties.map((partyAbbr, idx) => (
+                  <Bar key={partyAbbr} dataKey={partyAbbr} fill={colors[idx % colors.length]} radius={[6, 6, 0, 0]} maxBarSize={60} />
+                ))}
               </BarChart>
             </ResponsiveContainer>
           </div>
