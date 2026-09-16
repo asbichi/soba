@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { db } from '../db/index.ts';
 import { 
   elections, wards, pollingUnits, parties, candidates, 
-  pollingUnitResults, candidateResults, users, auditLogs 
+  pollingUnitResults, candidateResults, users, auditLogs, resultEvidence 
 } from '../db/schema.ts';
 import { requireAuth, AuthRequest } from '../middleware/auth.ts';
 import { eq, and, sql, desc } from 'drizzle-orm';

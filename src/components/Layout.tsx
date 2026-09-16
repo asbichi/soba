@@ -18,7 +18,7 @@ export function Layout() {
   ];
 
   const filteredNav = navigation.filter(item => 
-    !item.roles || (dbUser && item.roles.includes(dbUser.role))
+    !item.roles || (dbUser && item.roles.includes(dbUser.role)) || !dbUser
   );
 
   return (
@@ -34,14 +34,14 @@ export function Layout() {
       {/* Mobile Backdrop */}
       {mobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 z-40 md:hidden" 
+          className="fixed inset-0 bg-black/60 z-[90] md:hidden" 
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <div className={clsx(
-        "bg-[#484848] border-r border-slate-700 fixed md:sticky top-0 h-screen w-64 z-50 transition-transform duration-300 ease-in-out md:translate-x-0 shrink-0",
+        "bg-[#484848] border-r border-slate-700 fixed md:sticky top-0 h-[100dvh] w-64 z-[100] transition-transform duration-300 ease-in-out md:translate-x-0 shrink-0 shadow-2xl",
         mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full">
